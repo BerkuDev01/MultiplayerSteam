@@ -96,11 +96,11 @@ func _on_lobby_joined(lobby_id: int):
 func _on_lobby_join_failed():
 	lobby_info_label.text = "Error al unirse al lobby"
 
-func _on_player_joined(steam_id: int, player_name_joined: String):
+func _on_player_joined(_steam_id: int, player_name_joined: String):
 	print("UI: Jugador unido: ", player_name_joined)
 	_update_players_list()
 
-func _on_player_left(steam_id: int):
+func _on_player_left(_steam_id: int):
 	print("UI: Jugador salió")
 	_update_players_list()
 
