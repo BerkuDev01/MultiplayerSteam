@@ -38,6 +38,7 @@ func _ready():
 	Steam.lobby_joined.connect(_on_lobby_joined)
 	Steam.lobby_chat_update.connect(_on_lobby_chat_update)
 	Steam.lobby_data_update.connect(_on_lobby_data_update)
+	Steam.join_requested.connect(_on_invite)
 
 func _process(_delta):
 	Steam.run_callbacks()
@@ -180,3 +181,6 @@ func _on_lobby_data_update(success: int, updated_lobby_id: int, member_id: int):
 	if updated_lobby_id == lobby_id:
 		get_lobby_members()
 		lobby_data_updated.emit()
+
+func _on_invite(_lobby_id: int,_steam_id:int) -> void:
+	Steam.joinLobby(_lobby_id)
