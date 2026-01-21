@@ -75,6 +75,10 @@ visible = false
 layout_mode = 2
 text = "Iniciar partida"
 
+[node name="SteamUI" type="Button" parent="MarginContainer/VBoxContainer/ButtonsContainer"]
+layout_mode = 2
+text = "Iniciar UI Steam"
+
 [node name="PlayersContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer"]
 layout_mode = 2
 

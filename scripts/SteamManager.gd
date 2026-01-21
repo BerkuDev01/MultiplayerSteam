@@ -52,6 +52,11 @@ func search_lobbies():
 	print("Buscando lobbies...")
 	Steam.addRequestLobbyListDistanceFilter(Steam.LOBBY_DISTANCE_FILTER_WORLDWIDE)
 	Steam.requestLobbyList()
+	
+#
+func open_steam_ui():
+	print("Conectando Steam UI")
+	Steam.activateGameOverlay()
 
 # Unirse a un lobby
 func join_lobby(target_lobby_id: int):

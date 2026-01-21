@@ -9,6 +9,7 @@ extends Control
 @onready var start_game_btn = $MarginContainer/VBoxContainer/ButtonsContainer/StartGameButton
 @onready var players_list = $MarginContainer/VBoxContainer/PlayersContainer/PlayersList
 @onready var lobby_info_label = $MarginContainer/VBoxContainer/LobbyInfo
+@onready var steam_ui = $MarginContainer/VBoxContainer/ButtonsContainer/SteamUI
 
 var player_name: String = "Player"
 var player_color: Color = Color.BLUE
@@ -23,6 +24,7 @@ func _ready():
 	join_lobby_btn.pressed.connect(_on_join_lobby_pressed)
 	leave_lobby_btn.pressed.connect(_on_leave_lobby_pressed)
 	start_game_btn.pressed.connect(_on_start_game_pressed)
+	steam_ui.pressed.connect(_on_steam_ui_pressed)
 	
 	player_name_input.text_changed.connect(_on_name_changed)
 	color_picker.color_changed.connect(_on_color_changed)
@@ -57,6 +59,10 @@ func _on_join_lobby_pressed():
 	# En una implementación real, mostrarías una lista de lobbies
 	print("Buscando lobbies...")
 	SteamManager.search_lobbies()
+
+func _on_steam_ui_pressed():
+	print("IniciandoUI")
+	SteamManager.open_steam_ui()
 	
 	# Esperar un momento para que lleguen los resultados
 	await get_tree().create_timer(1.0).timeout
