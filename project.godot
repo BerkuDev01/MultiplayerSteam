@@ -18,6 +18,7 @@ config/icon="res://icon.svg"
 [autoload]
 
 SteamManager="*res://scripts/SteamManager.gd"
+LANManager="*res://scripts/LANManager.gd"
 
 [rendering]
 

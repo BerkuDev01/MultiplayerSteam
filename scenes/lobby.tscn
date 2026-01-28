@@ -40,7 +40,6 @@ text = "Tu nombre: "
 [node name="NameInput" type="LineEdit" parent="MarginContainer/VBoxContainer/NameContainer"]
 custom_minimum_size = Vector2(200, 0)
 layout_mode = 2
-text = "Gabi"
 
 [node name="ColorContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
 layout_mode = 2
@@ -53,6 +52,50 @@ text = "Tu color:"
 layout_mode = 2
 color = Color(0.43821898, 0.01906553, 0.2853025, 1)
 edit_alpha = false
+
+[node name="LobbyTypeContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/LobbyTypeContainer"]
+layout_mode = 2
+text = "Tipo de lobby"
+
+[node name="SteamLobbyButton" type="Button" parent="MarginContainer/VBoxContainer/LobbyTypeContainer"]
+layout_mode = 2
+toggle_mode = true
+button_pressed = true
+text = "Steam"
+
+[node name="LANLobbyButton" type="Button" parent="MarginContainer/VBoxContainer/LobbyTypeContainer"]
+layout_mode = 2
+toggle_mode = true
+text = "LAN"
+
+[node name="LANContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer"]
+visible = false
+layout_mode = 2
+
+[node name="IPContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer/LANContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/LANContainer/IPContainer"]
+layout_mode = 2
+text = "IP:"
+
+[node name="IPInput" type="LineEdit" parent="MarginContainer/VBoxContainer/LANContainer/IPContainer"]
+layout_mode = 2
+text = "127.0.0.1"
+
+[node name="PortContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer/LANContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/LANContainer/PortContainer"]
+layout_mode = 2
+text = "Puerto:"
+
+[node name="PortInput" type="LineEdit" parent="MarginContainer/VBoxContainer/LANContainer/PortContainer"]
+layout_mode = 2
+text = "7777"
 
 [node name="ButtonsContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer"]
 layout_mode = 2

@@ -9,11 +9,17 @@ signal player_joined(steam_id, player_name)
 signal player_left(steam_id)
 signal lobby_data_updated()
 
+enum LobbyType {
+	STEAM,  # Usa Steam P2P networking
+	LAN     # Usa conexión directa LAN (sin Steam matchmaking)
+}
+
 var steam_id: int = 0
 var steam_username: String = ""
 var lobby_id: int = 0
 var lobby_members: Array = []
 var is_host: bool = false
+var current_lobby_type: LobbyType = LobbyType.STEAM
 
 # Datos de jugadores en el lobby
 var players_data: Dictionary = {} # {steam_id: {name: "", color: Color}}
@@ -44,8 +50,18 @@ func _process(_delta):
 	Steam.run_callbacks()
 
 # Crear lobby
-func create_lobby(max_players: int = 2):
-	print("Creando lobby...")
+func create_lobby(max_players: int = 2, lobby_type: LobbyType = LobbyType.STEAM):
+	current_lobby_type = lobby_type
+	
+	if lobby_type == LobbyType.LAN:
+		print("Creando lobby LAN...")
+		# Para LAN, generamos un ID simulado y emitimos la señal
+		lobby_id = randi() % 100000 + 1000
+		is_host = true
+		lobby_created.emit(lobby_id)
+		return
+	
+	print("Creando lobby Steam...")
 	Steam.createLobby(Steam.LOBBY_TYPE_PUBLIC, max_players)
 
 # Buscar lobbies disponibles
@@ -53,8 +69,8 @@ func search_lobbies():
 	print("Buscando lobbies...")
 	Steam.addRequestLobbyListDistanceFilter(Steam.LOBBY_DISTANCE_FILTER_WORLDWIDE)
 	Steam.requestLobbyList()
-	
-#
+
+# Abrir overlay de Steam
 func open_steam_ui():
 	print("Conectando Steam UI")
 	Steam.activateGameOverlay()
@@ -182,5 +198,7 @@ func _on_lobby_data_update(success: int, updated_lobby_id: int, member_id: int):
 		get_lobby_members()
 		lobby_data_updated.emit()
 
-func _on_invite(_lobby_id: int,_steam_id:int) -> void:
+# Callback de invitación de Steam
+func _on_invite(_lobby_id: int, _steam_id: int) -> void:
+	print("Invitación recibida al lobby: ", _lobby_id)
 	Steam.joinLobby(_lobby_id)
