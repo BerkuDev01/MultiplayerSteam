@@ -150,8 +150,28 @@ func _on_start_game_pressed():
 		can_start = LANManager.is_server and LANManager.get_connected_peers().size() == 2
 	
 	if can_start:
-		# Cambiar a la escena del juego
-		get_tree().change_scene_to_file("res://game.tscn")
+		print("=== HOST INICIANDO PARTIDA ===")
+		
+		# El host envía señal a todos para cambiar de escena (solo LAN)
+		if selected_lobby_type == SteamManager.LobbyType.LAN:
+			# Enviar RPC a todos los clientes
+			rpc("_change_to_game_scene")
+		
+		# El host también cambia de escena (esto va después del RPC)
+		_change_to_game_scene()
+
+# RPC para cambiar de escena
+@rpc("any_peer", "call_local", "reliable")
+func _change_to_game_scene():
+	print("=== CAMBIANDO A ESCENA DE JUEGO ===")
+	
+	# Verificar que todavía estamos en el árbol de escena
+	if not is_inside_tree():
+		print("ERROR: El nodo ya no está en el árbol de escena")
+		return
+	
+	# Cambiar a la escena del juego
+	get_tree().change_scene_to_file("res://scenes/game.tscn")
 
 func _on_lobby_created(lobby_id: int):
 	print("UI: Lobby creado con ID: ", lobby_id)

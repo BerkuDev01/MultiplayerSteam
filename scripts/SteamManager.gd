@@ -174,7 +174,7 @@ func _on_lobby_joined(joined_lobby_id: int, _permissions: int, _locked: bool, re
 		print("ERROR: Fallo al unirse al lobby. Código: ", response)
 		lobby_join_failed.emit()
 
-func _on_lobby_chat_update(changed_lobby_id: int, changed_id: int, making_change_id: int, chat_state: int):
+func _on_lobby_chat_update(changed_lobby_id: int, changed_id: int, _making_change_id: int, chat_state: int):
 	if changed_lobby_id != lobby_id:
 		return
 	
@@ -193,7 +193,7 @@ func _on_lobby_chat_update(changed_lobby_id: int, changed_id: int, making_change
 			get_lobby_members()
 			player_left.emit(changed_id)
 
-func _on_lobby_data_update(success: int, updated_lobby_id: int, member_id: int):
+func _on_lobby_data_update(_success: int, updated_lobby_id: int, _member_id: int):
 	if updated_lobby_id == lobby_id:
 		get_lobby_members()
 		lobby_data_updated.emit()
