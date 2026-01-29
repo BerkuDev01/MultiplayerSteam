@@ -75,7 +75,7 @@ func _ready():
 	_update_ui_state(false)
 
 func _on_name_changed(new_name: String):
-	player_name = new_name
+	player_name = new_name if new_name != "" else "Player"
 	if selected_lobby_type == SteamManager.LobbyType.STEAM and SteamManager.lobby_id != 0:
 		SteamManager.set_player_data(player_name, player_color)
 	elif selected_lobby_type == SteamManager.LobbyType.LAN and LANManager.peer != null:
@@ -97,6 +97,7 @@ func _on_steam_lobby_selected():
 
 func _on_lan_lobby_selected():
 	selected_lobby_type = SteamManager.LobbyType.LAN
+	SteamManager.current_lobby_type = SteamManager.LobbyType.LAN  # Importante!
 	lan_container.visible = true
 	join_lobby_btn.text = "Unirse a IP"
 	steam_lobby_btn.disabled = false
@@ -111,8 +112,15 @@ func _on_create_lobby_pressed():
 		print("LANManager existe: ", LANManager != null)
 		var port = int(port_input.text)
 		print("Puerto: ", port)
-		LANManager.set_local_player_data(player_name, player_color)
-		print("Datos del jugador establecidos: ", player_name, " - ", player_color)
+		
+		# Asegurarse de que el nombre no esté vacío
+		var final_name = player_name if player_name != "" else "Player"
+		print("Nombre final: ", final_name)
+		print("Color final: ", player_color)
+		
+		LANManager.set_local_player_data(final_name, player_color)
+		SteamManager.current_lobby_type = SteamManager.LobbyType.LAN  # Importante!
+		print("Datos del jugador establecidos: ", final_name, " - ", player_color)
 		var result = LANManager.create_server(port)
 		print("Resultado de create_server: ", result)
 		if not result:
@@ -129,7 +137,14 @@ func _on_join_lobby_pressed():
 		print("Conectando a servidor LAN...")
 		var ip = ip_input.text
 		var port = int(port_input.text)
-		LANManager.set_local_player_data(player_name, player_color)
+		
+		# Asegurarse de que el nombre no esté vacío
+		var final_name = player_name if player_name != "" else "Player"
+		print("Nombre final: ", final_name)
+		print("Color final: ", player_color)
+		
+		LANManager.set_local_player_data(final_name, player_color)
+		SteamManager.current_lobby_type = SteamManager.LobbyType.LAN  # Importante!
 		LANManager.join_server(ip, port)
 
 func _on_leave_lobby_pressed():
@@ -231,11 +246,11 @@ func _get_local_ip() -> String:
 			return ip
 	return "127.0.0.1"
 
-func _on_player_joined(_steam_id: int, player_name_joined: String):
+func _on_player_joined(steam_id: int, player_name_joined: String):
 	print("UI: Jugador unido: ", player_name_joined)
 	_update_players_list()
 
-func _on_player_left(_steam_id: int):
+func _on_player_left(steam_id: int):
 	print("UI: Jugador salió")
 	_update_players_list()
 

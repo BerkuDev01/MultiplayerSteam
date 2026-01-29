@@ -6,126 +6,105 @@ signal game_started()
 signal player_scored(player_id: int, new_score: int)
 signal game_ended(winner_id: int)
 
-# Referencias a spawns
-@onready var spawn1 = $"../Spawns/Spawn1"
-@onready var spawn2 = $"../Spawns/Spawn2"
-@onready var multiplayer_spawner = $MultiplayerSpawner
+# Posiciones de spawn (las definimos aquí si no hay Marker2D)
+var spawn_positions: Array[Vector2] = [
+	Vector2(200, 300),   # Spawn 1 (izquierda)
+	Vector2(900, 300)    # Spawn 2 (derecha)
+]
 
 # Prefab del jugador
-const PLAYER_SCENE = preload("res://scenes/player.tscn")
+var player_scene_path = "res://scenes/player.tscn"
 
 # Datos del juego
-var players: Dictionary = {}
-var scores: Dictionary = {}
+var players: Dictionary = {}  # {peer_id: {node: Node2D, score: int, color: Color, name: String}}
+var scores: Dictionary = {}  # {peer_id: score}
 var max_score: int = 5
 var is_game_active: bool = false
 
 func _ready():
 	print("=== GAMEMANAGER READY ===")
 	
-	# Verificar spawns
-	if spawn1 == null:
-		print("ERROR: No se encontró Spawn1")
-		return
-	if spawn2 == null:
-		print("ERROR: No se encontró Spawn2")
-		return
-	
-	print("Spawn1: ", spawn1.global_position)
-	print("Spawn2: ", spawn2.global_position)
-	
-	# Verificar si estamos en red
-	print("Multiplayer autoridad: ", multiplayer.get_unique_id())
-	print("¿Es servidor?: ", multiplayer.is_server())
-	
-	# Esperar a que la red esté lista
+	# Esperar un momento para que todo esté listo
 	await get_tree().create_timer(0.5).timeout
 	
-	# Solo el servidor/host spawnea jugadores
-	if multiplayer.is_server():
-		print("SOY SERVIDOR - Spawneando jugadores...")
-		_spawn_all_players()
+	# Determinar qué sistema de red estamos usando y spawnear jugadores
+	if SteamManager.current_lobby_type == SteamManager.LobbyType.STEAM:
+		print("Usando modo Steam")
+		_setup_steam_game()
 	else:
-		print("SOY CLIENTE - Esperando spawns del servidor...")
+		print("Usando modo LAN")
+		_setup_lan_game()
 	
 	is_game_active = true
 	game_started.emit()
 
-func _spawn_all_players():
-	print("=== SPAWNEANDO TODOS LOS JUGADORES ===")
+func _setup_steam_game():
+	print("Configurando juego Steam...")
+	var members = SteamManager.get_lobby_members()
+	print("Miembros en Steam: ", members)
 	
-	var players_to_spawn = []
-	
-	# Obtener lista de jugadores según el modo
-	if SteamManager.current_lobby_type == SteamManager.LobbyType.STEAM:
-		print("Obteniendo miembros de Steam...")
-		var members = SteamManager.get_lobby_members()
-		print("Miembros Steam: ", members)
+	for i in range(members.size()):
+		var member_id = members[i]
+		var player_data = SteamManager.get_player_data(member_id)
 		
-		for member_id in members:
-			var data = SteamManager.get_player_data(member_id)
-			print("  - Miembro: ", member_id, " -> ", data)
-			players_to_spawn.append({
-				"id": member_id,
-				"name": data["name"],
-				"color": data["color"]
-			})
-	else:
-		print("Obteniendo peers de LAN...")
-		var peers = LANManager.get_connected_peers()
-		print("Peers LAN: ", peers)
-		
-		for peer_id in peers:
-			var data = LANManager.get_player_data(peer_id)
-			print("  - Peer: ", peer_id, " -> ", data)
-			players_to_spawn.append({
-				"id": peer_id,
-				"name": data["name"],
-				"color": data["color"]
-			})
+		var spawn_pos = spawn_positions[i] if i < spawn_positions.size() else Vector2(400 + i * 200, 300)
+		print("Spawneando en posición: ", spawn_pos)
+		_spawn_player(member_id, player_data["name"], player_data["color"], spawn_pos)
+
+func _setup_lan_game():
+	print("Configurando juego LAN...")
+	var peers = LANManager.get_connected_peers()
+	print("Peers en LAN: ", peers)
 	
-	print("Total jugadores a spawnear: ", players_to_spawn.size())
-	
-	# Spawnear cada jugador
-	for i in range(players_to_spawn.size()):
-		var player_info = players_to_spawn[i]
-		var spawn_pos = spawn1.global_position if i == 0 else spawn2.global_position
+	for i in range(peers.size()):
+		var peer_id = peers[i]
+		var player_data = LANManager.get_player_data(peer_id)
 		
-		print("Spawneando jugador ", i, ": ", player_info["name"], " en ", spawn_pos)
-		_spawn_player(player_info["id"], player_info["name"], player_info["color"], spawn_pos)
+		var spawn_pos = spawn_positions[i] if i < spawn_positions.size() else Vector2(400 + i * 200, 300)
+		print("Spawneando en posición: ", spawn_pos)
+		_spawn_player(peer_id, player_data["name"], player_data["color"], spawn_pos)
 
 func _spawn_player(peer_id: int, player_name: String, color: Color, spawn_position: Vector2):
-	print("  > Creando instancia de jugador...")
-	var player = PLAYER_SCENE.instantiate()
-	player.name = "Player_" + str(peer_id)
-	player.global_position = spawn_position
+	print("=== SPAWNEANDO JUGADOR ===")
+	print("  Peer ID: ", peer_id)
+	print("  Nombre: ", player_name)
+	print("  Color: ", color)
+	print("  Posición: ", spawn_position)
 	
-	print("  > Configurando propiedades...")
-	# Configurar antes de añadir al árbol
-	player.peer_id = peer_id
-	player.player_name = player_name
-	player.player_color = color
+	# Cargar escena del jugador
+	var player_scene = load(player_scene_path)
+	if player_scene == null:
+		print("ERROR: No se pudo cargar la escena del jugador en: ", player_scene_path)
+		return
 	
-	# Determinar si es local
+	var player_instance = player_scene.instantiate()
+	player_instance.name = "Player_" + str(peer_id)
+	player_instance.position = spawn_position
+	
+	# Configurar jugador
+	player_instance.peer_id = peer_id
+	player_instance.player_name = player_name
+	player_instance.player_color = color
+	
+	# Determinar si este jugador es local
 	if SteamManager.current_lobby_type == SteamManager.LobbyType.STEAM:
-		player.is_local = (peer_id == SteamManager.steam_id)
+		player_instance.is_local = (peer_id == SteamManager.steam_id)
 	else:
-		player.is_local = (peer_id == multiplayer.get_unique_id())
+		player_instance.is_local = (peer_id == multiplayer.get_unique_id())
 	
-	print("  > Añadiendo al árbol...")
-	# Añadir al nodo Game (padre del GameManager)
-	get_parent().add_child(player)
+	# Añadir al árbol de escena
+	get_parent().add_child(player_instance)
 	
-	print("  > Guardando referencia...")
+	# Guardar referencia
 	players[peer_id] = {
-		"node": player,
+		"node": player_instance,
 		"score": 0,
 		"color": color,
 		"name": player_name
 	}
 	scores[peer_id] = 0
 	
-	print("  ✓ Jugador spawneado: ", player_name, " | Local: ", player.is_local)
+	print("✓ Jugador spawneado correctamente: ", player_name, " | Es local: ", player_instance.is_local)
 
 func add_score(peer_id: int):
 	if not scores.has(peer_id):
@@ -136,6 +115,7 @@ func add_score(peer_id: int):
 	
 	print("Puntuación: ", players[peer_id]["name"], " = ", scores[peer_id])
 	
+	# Verificar si alguien ganó
 	if scores[peer_id] >= max_score:
 		_end_game(peer_id)
 
@@ -145,10 +125,11 @@ func _end_game(winner_id: int):
 	print("¡Juego terminado! Ganador: ", players[winner_id]["name"])
 
 func reset_positions():
+	# Resetear posiciones después de un punto
 	var peer_ids = players.keys()
 	for i in range(peer_ids.size()):
 		var peer_id = peer_ids[i]
-		var spawn_pos = spawn1.global_position if i == 0 else spawn2.global_position
-		players[peer_id]["node"].global_position = spawn_pos
+		var spawn_pos = spawn_positions[i] if i < spawn_positions.size() else Vector2(400 + i * 200, 300)
+		players[peer_id]["node"].position = spawn_pos
 		players[peer_id]["node"].linear_velocity = Vector2.ZERO
 		players[peer_id]["node"].angular_velocity = 0.0
